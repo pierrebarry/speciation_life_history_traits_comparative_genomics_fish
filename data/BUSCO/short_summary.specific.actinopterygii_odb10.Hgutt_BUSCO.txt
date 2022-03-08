@@ -1,0 +1,19 @@
+# BUSCO version is: 5.2.2 
+# The lineage dataset is: actinopterygii_odb10 (Creation date: 2021-02-19, number of genomes: 26, number of BUSCOs: 3640)
+# Summarized benchmarking in BUSCO notation for file /DATA/sdb1/Pierre/Reference_Genome/referencegenome_Hgutt.fa
+# BUSCO was run in mode: genome
+# Gene predictor used: metaeuk
+
+	***** Results: *****
+
+	C:95.7%[S:94.5%,D:1.2%],F:1.6%,M:2.7%,n:3640	   
+	3481	Complete BUSCOs (C)			   
+	3438	Complete and single-copy BUSCOs (S)	   
+	43	Complete and duplicated BUSCOs (D)	   
+	57	Fragmented BUSCOs (F)			   
+	102	Missing BUSCOs (M)			   
+	3640	Total BUSCO groups searched		   
+
+Dependencies and versions:
+	hmmsearch: 3.1
+	metaeuk: 4.a0f584d
