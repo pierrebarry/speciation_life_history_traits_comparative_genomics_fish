@@ -809,9 +809,9 @@ all<-ggplot(data = world) +
         panel.background = element_rect(fill = "transparent"),
         panel.border = element_rect(fill = NA),
         legend.position = "none")
-  #annotation_north_arrow(location = "bl", which_north = "true", 
-  #                       pad_x = unit(3.25, "in"), pad_y = unit(2.5, "in"),
-  #                       style = north_arrow_fancy_orienteering) 
+#annotation_north_arrow(location = "bl", which_north = "true", 
+#                       pad_x = unit(3.25, "in"), pad_y = unit(2.5, "in"),
+#                       style = north_arrow_fancy_orienteering) 
 
 map<-ggplot() +
   coord_equal(xlim = c(0, 100), ylim = c(0, 100)) +

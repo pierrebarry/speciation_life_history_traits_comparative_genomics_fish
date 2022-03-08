@@ -33,7 +33,7 @@ data=data.frame(SPECIES=c(NA),
                 DUPLICATED=c(NA),
                 FRAGMENTED=c(NA),
                 MISSING=c(NA)
-                )
+)
 for (i in list_species){
   txt=readLines(paste("data/BUSCO/short_summary.specific.actinopterygii_odb10.",i,"_BUSCO.txt",sep=""))
   num=str_extract_numbers(txt[9])[[1]]
@@ -75,29 +75,29 @@ data$SPECIES=factor(data$SPECIES,
                              "Spilc",
                              "Ssard",
                              "Styph"),
-                             labels=c("Atherina boyeri",
-                                      "Alosa fallax",
-                                      "Coryphoblennius galerita",
-                                      "Coris julis",
-                                      "Dicentrarchus labrax",
-                                      "Diplodus puntazzo",
-                                      "Engraulis encrasicolus",
-                                      "Gobius niger",
-                                      "Hippocampus guttulatus",
-                                      "Lophius budegassa",
-                                      "Lithognathus mormyrus",
-                                      "Merluccius merluccius",
-                                      "Mullus surmuletus",
-                                      "Pagellus erythrinus",
-                                      "Serranus cabrilla",
-                                      "Spondyliosoma cantharus",
-                                      "Symphodus cinereus",
-                                      "Sardina pilchardus",
-                                      "Sarda sarda",
-                                      "Syngnathus typhle"))
+                    labels=c("Atherina boyeri",
+                             "Alosa fallax",
+                             "Coryphoblennius galerita",
+                             "Coris julis",
+                             "Dicentrarchus labrax",
+                             "Diplodus puntazzo",
+                             "Engraulis encrasicolus",
+                             "Gobius niger",
+                             "Hippocampus guttulatus",
+                             "Lophius budegassa",
+                             "Lithognathus mormyrus",
+                             "Merluccius merluccius",
+                             "Mullus surmuletus",
+                             "Pagellus erythrinus",
+                             "Serranus cabrilla",
+                             "Spondyliosoma cantharus",
+                             "Symphodus cinereus",
+                             "Sardina pilchardus",
+                             "Sarda sarda",
+                             "Syngnathus typhle"))
 p<-melt(data[,-2],id.vars=c("SPECIES")) %>%
   mutate(variable = fct_relevel(variable, "MISSING","FRAGMENTED","DUPLICATED","SINGLE")) %>%
-ggplot(aes(x=SPECIES,y=value,fill=variable)) +
+  ggplot(aes(x=SPECIES,y=value,fill=variable)) +
   geom_bar(position="stack", stat="identity",alpha=0.6) +
   coord_flip() +
   scale_fill_manual(values=rev(wes_palette(n=5, name="Zissou1"))) +

@@ -2,6 +2,8 @@ library(RColorBrewer)
 library(formattable)
 library(ggplot2)
 
+#seqkit fx2tab --length --name referencegenome_Afall.fa | cut -f2
+
 setwd("COGEDIV")
 
 annotation_custom2 <- 
