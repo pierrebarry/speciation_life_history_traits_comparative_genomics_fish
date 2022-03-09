@@ -166,12 +166,12 @@ Scripts and files to generate results and output of the Chapter 2 from the PhD o
 
 :bar_chart: Scripts:
 - `Fig1.R` : script for generating Fig1 from the PhD manuscript
-- `Fig2.R` : script for generating Fig1 from the PhD manuscript
-- `Fig3.R` : script for generating Fig1 from the PhD manuscript
-- `Fig4.R` : script for generating Fig1 from the PhD manuscript
-- `Fig5.R` : script for generating Fig1 from the PhD manuscript
-- `Fig6.R` : script for generating Fig1 from the PhD manuscript
-- `Fig7.R` : script for generating Fig1 from the PhD manuscript
+- `Fig2.R` : script for generating Fig2 from the PhD manuscript
+- `Fig3.R` : script for generating Fig3 from the PhD manuscript
+- `Fig4.R` : script for generating Fig4 from the PhD manuscript
+- `Fig5.R` : script for generating Fig5 from the PhD manuscript
+- `Fig6.R` : script for generating Fig6 from the PhD manuscript
+- `Fig7.R` : script for generating Fig7 from the PhD manuscript
 
  ```ruby
 
