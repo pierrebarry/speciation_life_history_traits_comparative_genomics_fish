@@ -83,6 +83,7 @@ Scripts and files to generate results and output of the Chapter 2 from the PhD o
 - `PCA_list.Rdata`: Principal Component Analysis estimations per species with various maf (from 0 to 0.5) and on the whole or pruned by linkage desiquilibrium data set (to open in R, load(file="PCA_list.Rdata"): the corresponding object is a list, each element of the list corresponding to a species, and each sublist, PCA invidiual coordinates from maf and variant dataset).
 
 :bar_chart: Scripts:
+- `RUN_PCA.R` : run PCA analysis per species with various maf parameters (0 to 0.5, with the whole variants dataset or pruned by linkage disequilibrium dataset)
 - `PCA.R` : plot PCA 
 
  ```ruby
