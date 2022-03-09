@@ -15,11 +15,53 @@ Scripts and files to generate results and output of the Chapter 2 from the PhD o
 
 ## :computer: Pre-processing fasta files
 
+:file_folder: Files:
+- ``: 
+
+:bar_chart: Scripts:
+- `` : 
+ ```ruby
+
+```
+
 ## :computer: Reference genome alignment
+
+:file_folder: Files:
+- ``: 
+
+:bar_chart: Scripts:
+- `` : 
+ ```ruby
+
+```
 
 ## :computer: Variant Calling
 
+:file_folder: Files:
+- ``: 
+
+:bar_chart: Scripts:
+- `` : 
+ ```ruby
+
+```
+
 ## :chart_with_upwards_trend: Figures
+
+:file_folder: Files:
+- ``: 
+
+:bar_chart: Scripts:
+- `` : 
+ ```ruby
+
+```
+
+## Miscellaneous
+
+:file_folder: Files:
+- `*.png`: images of each studied species 
+
 
 ## :wrench: Tools needed
 
