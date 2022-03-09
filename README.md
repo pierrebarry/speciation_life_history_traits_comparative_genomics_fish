@@ -46,6 +46,30 @@ Scripts and files to generate results and output of the Chapter 2 from the PhD o
 
 ```
 
+
+## :computer: Semi-permeability
+
+:file_folder: Files:
+- `*_fst_f3_wgs_50kb.csv`: species FST and f3 statistics in 50kb windows
+- `Delta_Frac_16_species.txt` : (Fst[in]-Fst[out])/Fst[out] estimated from 50kb windows for all species
+
+:bar_chart: Scripts:
+- `` : 
+ ```ruby
+
+```
+
+## :computer: BUSCO analyses
+
+:file_folder: Files:
+- `*_BUSCO_stats.csv`: species polymorphism statistic, Fst and f3 values of each BUSCO genes. 
+
+:bar_chart: Scripts:
+- `` : 
+ ```ruby
+
+```
+
 ## :chart_with_upwards_trend: Figures
 
 :file_folder: Files:
@@ -60,7 +84,7 @@ Scripts and files to generate results and output of the Chapter 2 from the PhD o
 ## Miscellaneous
 
 :file_folder: Files:
-- `*.png`: images of each studied species 
+- `data/*.png`: images of each studied species 
 
 
 ## :wrench: Tools needed
