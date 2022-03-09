@@ -1,0 +1,129 @@
+SP=[
+	#'Spilc'
+	#'Hgutt'
+	#'Mmerl',	
+	#'Scabr'
+	#'Dlabr',
+	#'Msurm'
+	#'Lmorm',
+	#'Dpunt',
+	#'Peryt',
+	#'Cjuli',
+	#'Ssard'
+	#'Cgale',
+	'Scine'
+	#'Lbude'
+	#'Styph',
+	#'Scant'
+	]
+
+output = subprocess.check_output("ls /shared/projects/abc_fish/tree_topology/data/"+SP[0]+"/ | grep '.bcf$' | rev | cut -c5- | rev | sed 's/.*_//'", shell=True)
+out=output.decode().split('\n')
+del out[-1]
+CHROM=out
+#CHROM=['98']
+print(SP)
+print(CHROM)
+
+
+rule all:
+	input:
+		vcf_phased_AA_header=expand("/shared/projects/abc_fish/tree_topology/data/{species}/{species}_phased_{chrom}_AA_remove_fake_AA_header.vcf",species=SP,chrom=CHROM),
+		samples=expand("/shared/projects/abc_fish/tree_topology/output/{species}/{species}_{chrom}.sample",species=SP,chrom=CHROM),
+		trees=expand("/shared/projects/abc_fish/tree_topology/output/{species}/{species}_{chrom}_1e-8_1.trees",species=SP,chrom=CHROM),
+		dated_trees=expand("/shared/projects/abc_fish/tree_topology/output/{species}/{species}_{chrom}_dated.trees",species=SP,chrom=CHROM),
+		dated_block=expand("/shared/projects/abc_fish/tree_topology/output/{species}/{species}_{chrom}_data.csv",species=SP,chrom=CHROM),
+		gnn=expand("/shared/projects/abc_fish/tree_topology/output/{species}/GNN_{chrom}.csv",species=SP,chrom=CHROM)
+
+rule get_input_tsinfer:
+        input:
+                phased_vcf="/shared/projects/abc_fish/tree_topology/data/{species}/{species}_phased_{chrom}.bcf",
+		create_ancestral_tsinfer="/shared/projects/abc_fish/tree_topology/script/create_ancestral_file.py"
+        output:
+                vcf_phased_AA_header="/shared/projects/abc_fish/tree_topology/data/{species}/{species}_phased_{chrom}_AA_remove_fake_AA_header.vcf"
+        shell:
+                "cd /shared/projects/abc_fish/tree_topology/data/{wildcards.species} && "
+                #"grep '{wildcards.chrom}' {wildcards.species}_proba_LDhelmet.txt > {wildcards.species}_proba_LDhelmet_{wildcards.chrom}.txt && "
+		"""awk '$1="LG"$1"end"' {wildcards.species}_proba_LDhelmet.txt | grep LG'{wildcards.chrom}'end | awk '{{ gsub("LG", "", $1); print }}' | sed 's/end//' > {wildcards.species}_proba_LDhelmet_{wildcards.chrom}.txt && """
+		"python3 {input.create_ancestral_tsinfer} {wildcards.chrom} {wildcards.species} && "
+                "bgzip -f ancestral_{wildcards.chrom}_test.tsv && "
+                "tabix -f -p vcf ancestral_{wildcards.chrom}_test.tsv.gz && "
+                "bcftools annotate -a ancestral_{wildcards.chrom}_test.tsv.gz -h ../annotate.hdr -c CHROM,POS,AA {input.phased_vcf} -o {wildcards.species}_phased_{wildcards.chrom}_AA.vcf && "
+                "bcftools query -f '%REF\n' {wildcards.species}_phased_{wildcards.chrom}_AA.vcf > REF && "
+                r"sed -i '1s/^/REF \n/' REF && "
+                "bcftools query -f '%ALT\n' {wildcards.species}_phased_{wildcards.chrom}_AA.vcf > ALT && "
+                r"sed -i '1s/^/ALT \n/' ALT && "
+                "bcftools query -f '%AF\n' {wildcards.species}_phased_{wildcards.chrom}_AA.vcf > AF && "
+                r"sed -i '1s/^/AF \n/' AF && "
+                "bgzip -f -d -c ancestral_{wildcards.chrom}_test.tsv.gz > tt.tsv && "
+                "paste tt.tsv REF ALT AF > check_AA.tsv && "
+                "Rscript /shared/projects/abc_fish/tsinfer/check_AA.R {wildcards.chrom} && "
+                "bgzip -f ancestral_state_{wildcards.chrom}_remove_fake_AA.tsv && "
+                "tabix -f -p vcf ancestral_state_{wildcards.chrom}_remove_fake_AA.tsv.gz && "
+                "bcftools annotate -a ancestral_state_{wildcards.chrom}_remove_fake_AA.tsv.gz -h ../annotate.hdr -c CHROM,POS,AA {input.phased_vcf} -o /shared/projects/abc_fish/tree_topology/data/{wildcards.species}/{wildcards.species}_phased_{wildcards.chrom}_AA_remove_fake_AA.vcf && "
+		"INT=$(tail -n1 {wildcards.species}_phased_{wildcards.chrom}_AA_remove_fake_AA.vcf | awk '{{print $2+1}}') && "
+        	"sed '5 i ##contig=<ID='{wildcards.chrom}',length='$INT'>' {wildcards.species}_phased_{wildcards.chrom}_AA_remove_fake_AA.vcf | sed '6d' > {output.vcf_phased_AA_header}"
+
+rule create_samples:
+	input:
+		script_create_samples="/shared/projects/abc_fish/tree_topology/script/tsinfer_create_input_files.py",
+		vcf_phased_AA_header="/shared/projects/abc_fish/tree_topology/data/{species}/{species}_phased_{chrom}_AA_remove_fake_AA_header.vcf"
+	output:
+		samples="/shared/projects/abc_fish/tree_topology/output/{species}/{species}_{chrom}.sample"
+	shell:
+		"python3 "
+		"{input.script_create_samples} "
+		"{input.vcf_phased_AA_header} "
+		"{output.samples} "
+		"{wildcards.species}"
+
+rule tsinfer:
+	input:
+		script_tsinfer="/shared/projects/abc_fish/tree_topology/script/tsinfer_infer.py",
+		samples="/shared/projects/abc_fish/tree_topology/output/{species}/{species}_{chrom}.sample"
+	output:
+		trees="/shared/projects/abc_fish/tree_topology/output/{species}/{species}_{chrom}_1e-8_1.trees"
+	params:
+		recombination_rate=1e-8,
+		mismatch_ratio=1
+	shell:
+		"python3 "
+		"{input.script_tsinfer} "
+		"{input.samples} "
+		"{params.recombination_rate} "
+		"{params.mismatch_ratio} " 
+		"{output.trees}"
+
+rule tsdate:
+	input:
+		script_tsdate="/shared/projects/abc_fish/tree_topology/script/tsdate_infer.py",
+		trees="/shared/projects/abc_fish/tree_topology/output/{species}/{species}_{chrom}_1e-8_1.trees"
+	output:
+		dated_trees="/shared/projects/abc_fish/tree_topology/output/{species}/{species}_{chrom}_dated.trees",
+		dated_block="/shared/projects/abc_fish/tree_topology/output/{species}/{species}_{chrom}_data.csv"
+	params:
+		prior_grid=20,
+		Ne=92500,
+		mutation_rate=1e-8
+	shell:
+		"python3 "
+		"{input.script_tsdate} "
+		"{input.trees} "
+		"{params.prior_grid} "
+		"{params.Ne} "
+		"{params.mutation_rate} "
+		"{output.dated_trees} "
+		"{output.dated_block}"
+
+rule gnn:
+	input:
+		dated_trees="/shared/projects/abc_fish/tree_topology/output/{species}/{species}_{chrom}_dated.trees",
+		script_gnn="/shared/projects/abc_fish/tree_topology/script/local_gnn.py"
+	output:
+		gnn="/shared/projects/abc_fish/tree_topology/output/{species}/GNN_{chrom}.csv"
+	shell:
+		"python3 "
+		"{input.script_gnn} "
+		"{input.dated_trees} "
+		"{wildcards.species} "
+		"{wildcards.chrom}"
