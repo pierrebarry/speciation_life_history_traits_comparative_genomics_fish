@@ -203,7 +203,7 @@ We used also the following codes for the 4 populations:
 ## :computer: Correlation with life-history traits
 
 :file_folder: Files:
-- ``
+- `lfh.xlsx` : Life-history traits database
 
 :bar_chart: Scripts:
 - `correlation_lfh_fst_dxy_da_tsplit.R` : correlation between species Life history traits and, differentiation (fst), absolute (dxy), net (da) divergence and time of ancestral split (Tsplit) inferred by ABC.
@@ -261,6 +261,7 @@ We used also the following codes for the 4 populations:
 
 :file_folder: Files:
 - `data/*.png`: images of each studied species 
+- `all.fa.treefile` : tree of the 20 species from 87 BUSCO orthologs infer by RAxML rooted by *lepisosteus oculatus*
 
 :bar_chart: Scripts:
 - `plot_map_occurence.R`: display maps of occurence of species bashed on FishBase data.
