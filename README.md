@@ -6,10 +6,37 @@ Scripts and files to generate results and output of the Chapter 2 from the PhD o
 
 In all scripts and data, we used the following codes for the 20 studied species:
 
-| Latin names   | Species code |
-| ------------- | ------------- |
-| Atherina boyeri  | Aboye  |
-| Content Cell  | Content Cell  |
+| Latin names        | Species code |
+| -------------      | -------------|
+| *Atherina boyeri*  | Aboye        |
+| *Alosa fallax*  | Afall        |
+| *Coryphoblennius galerita*  | Cgale        |
+| *Coris julis*  | Cjuli        |
+| *Dicentarchus labrax*  | Dlabr        |
+| *Diplodus puntazzo*  | Dpunt        |
+| *Engraulis encrasicolus*  | Eencr        |
+| *Gobius niger*  | Gnige        |
+| *Hippocampus guttulatus*  | Hgutt        |
+| *Lophius budegassa*  | Lbude        |
+| *Lithognathus mormyrus*  | Lmorm        |
+| *Merluccius merluccius*  | Mmerl        |
+| *Mullus surmuletus*  | Msurm        |
+| *Pagellus erythrinus*  | Peryt        |
+| *Serranus cabrilla*  | Scabr        |
+| *Spondyliosoma cantharus*  | Scant        |
+| *Symphodus cinereus*  | Scine        |
+| *Sardina pilchardus*  | Spilc        |
+| *Sarda sarda*  | Ssard        |
+| *Syngnathus typhle*  | Styph        |
+
+We used also the following codes for the 4 populations:
+
+| Location        | Position from the Atlantic-Mediterranean suture zone| Population code |
+| -------------      | -------------| -------------|
+| Gulf of Lion | Mediterranean outside the suture zone (Med-out)        | Li |
+| Costa Calida  | Mediterranean inside the suture zone (Med-in)        | Mu |
+| Algarve  | Atlantic inside the suture zone (Atl-in)        | Fa |
+| Bay of Biscay  | Atlantic outside the suture zone (Atl-out)        | Ga |
 
 ## Sampling information
 
