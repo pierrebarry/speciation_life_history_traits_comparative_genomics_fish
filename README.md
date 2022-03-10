@@ -7,7 +7,7 @@ Scripts and files to generate results and output of the Chapter 2 from the PhD o
 In all scripts and data, we used the following codes for the 20 studied species:
 
 | Latin names        | Species code |
-| -------------      | -------------|
+|   :---:        |   :---:  
 | *Atherina boyeri*  | Aboye        |
 | *Alosa fallax*  | Afall        |
 | *Coryphoblennius galerita*  | Cgale        |
@@ -32,7 +32,7 @@ In all scripts and data, we used the following codes for the 20 studied species:
 We used also the following codes for the 4 populations:
 
 | Location        | Position from the Atlantic-Mediterranean suture zone| Population code |
-| -------------      | -------------| -------------|
+|   :---:        |   :---:  |   :---:  |
 | Gulf of Lion | Mediterranean outside the suture zone (Med-out)        | Li |
 | Costa Calida  | Mediterranean inside the suture zone (Med-in)        | Mu |
 | Algarve  | Atlantic inside the suture zone (Atl-in)        | Fa |
