@@ -199,6 +199,14 @@ Scripts and files to generate results and output of the Chapter 2 from the PhD o
 - `tsinfer_tsdata_si_im.pdf` : simulation and evaluation of signature of a Strict isolation and Isolation with Migration models on TMRCA distributions 
 - `tsinfer_tsdata_sc_mp.pdf` : simulation and evaluation of signature of a Secondary contact and Migration pulse models on TMRCA distributions 
 - `tsinfer_tsdata_ai.pdf` : simulation and evaluation of signature of a Ancestral introgression model on TMRCA distributions 
+- `ALL_PCA.pdf` : PCA of all species with maf = 0.05 and whole variant data set
+- `All_mapped.pdf` : Percentage of all individual reads mapped on species reference genome
+- `diff_gene.pdf` : difference between diversity, differentiation and divergence between species non-BUSCO and BUSCO genes.
+- `lfh_fst_li_ga.pdf` : correlation between 9 life-history traits and Fst between outer populations 
+- `lfh_dxy_li_ga.pdf` : correlation between 9 life-history traits and dxy between outer populations 
+- `lfh_da_li_ga.pdf` : correlation between 9 life-history traits and da between outer populations 
+- `D_fd_*.png` : result of test of differential introgression with the D statistic
+- `*_occurence.pdf` : distribution of each species based on FishBase data
 
 :bar_chart: Scripts:
 - `Fig1.R` : script for generating Fig1 from the PhD manuscript
