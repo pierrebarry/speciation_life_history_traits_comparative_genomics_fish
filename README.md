@@ -67,12 +67,12 @@ Scripts and files to generate results and output of the Chapter 2 from the PhD o
 :file_folder: Files:
 - `FST.xlsx`: Whole-genome FST, weighted and unweighted per species, estimated with vcftools. 
 - `dxy_all.Rdata` : Whole-genome Absolute (dxy), net divergence (da), diversity per species estimated from VCFs with variant and non-variant sites.
-- `fst_continuum.R` : plot the continuum of Fst with corresponding species PCA.
 
 :bar_chart: Scripts:
 - `dxy_analyze.R ` : estimate whole-genome dxy, da from 10kb windows per species.
 - `dxy_gradient_correlation_fst_dxy_da.R` : gradient of species dxy, and correlation between whole-genome Fst, dxy and da.
- 
+- `fst_continuum.R` : plot the continuum of Fst with corresponding species PCA.
+
  ```ruby
 
 ```
@@ -154,7 +154,12 @@ Scripts and files to generate results and output of the Chapter 2 from the PhD o
 - `create_ancestral_file.py` : creat a file with chrom, position and ancestral state.
 - `check_AA.R` : check if ancestral state in the VCFs corresponds to either the reference or alternative allele 
 - `local_gnn.py` : estimate Genetic Nearest Neighours retrieved and adapted from [Kelleher et al. 2019](https://www.nature.com/articles/s41588-019-0483-y)
+- `tsinfer_create_input_files.py` : create input files for tsinfer
+- `tsinfer_infer.py` : infer tree genealogies with tsinfer
+- `tsdate_infer.py` : infer branch lengths with tsdate 
+- `snakefile` : all steps to infer and date topologies from phased VCFs with unknown ancestral state.
 - `job` : deploy snakefile on IFB clusters
+- `plot_stats.R`: plot distribution of TMRCA
 
 ```ruby
 ```
@@ -177,7 +182,23 @@ Scripts and files to generate results and output of the Chapter 2 from the PhD o
 ## :chart_with_upwards_trend: Figures
 
 :file_folder: Files:
-- ``: 
+- `article_Fig2.pdf`: Fig2 from the manuscript 
+- `article_Fig3.pdf`: Fig3 from the manuscript 
+- `article_Fig3_supp.pdf`: TMCA distributions not scaled by species generation time
+- `article_Fig4.pdf`: Fig4 from the manuscript 
+- `article_Fig5.pdf`: Fig5 from the manuscript 
+- `article_Fig6.pdf`: Fig6 from the manuscript 
+- `article_Fig7.pdf`: Fig7 from the manuscript 
+- `article_FigS2.pdf` : same as Fig2 of the manuscript but replacing Fst on the x-axis by net divergence (da)
+- `article_Figsupp_distri_dxy_da.pdf` : gradient of species absolute divergence (dxy) and correlation between species Fst, dxy and da
+- `article_fig_1map.png` : map of the Figure 1
+- `f3_plot.pdf` : f3 result for all species all triplets topologies
+- `fd.pdf` : correlation between fd and Fst
+- `tsinfer_infer_interpop.png` : evaluation of performance of tsinfer to infer TMRCA between populations splitted by a secondary contact using various parameters
+- `tsinfer_infer_intrapop.png` : evaluation of performance of tsinfer to infer TMRCA within populations using various parameters
+- `tsinfer_tsdata_si_im.pdf` : simulation and evaluation of signature of a Strict isolation and Isolation with Migration models on TMRCA distributions 
+- `tsinfer_tsdata_sc_mp.pdf` : simulation and evaluation of signature of a Secondary contact and Migration pulse models on TMRCA distributions 
+- `tsinfer_tsdata_ai.pdf` : simulation and evaluation of signature of a Ancestral introgression model on TMRCA distributions 
 
 :bar_chart: Scripts:
 - `Fig1.R` : script for generating Fig1 from the PhD manuscript
