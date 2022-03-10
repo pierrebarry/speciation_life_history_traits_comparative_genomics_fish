@@ -2,6 +2,15 @@
 
 Scripts and files to generate results and output of the Chapter 2 from the PhD of Pierre Barry.
 
+## Species and population codes
+
+In all scripts and data, we used the following codes for the 20 studied species:
+
+| Latin names   | Species code |
+| ------------- | ------------- |
+| Atherina boyeri  | Aboye  |
+| Content Cell  | Content Cell  |
+
 ## Sampling information
 
 :file_folder: Files:
