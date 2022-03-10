@@ -145,6 +145,20 @@ Scripts and files to generate results and output of the Chapter 2 from the PhD o
 
 ```
 
+## :computer: Infer tree sequences with tsinfer and tsdate
+
+:file_folder: Files:
+- ``
+
+:bar_chart: Scripts:
+- `create_ancestral_file.py` : creat a file with chrom, position and ancestral state.
+- `check_AA.R` : check if ancestral state in the VCFs corresponds to either the reference or alternative allele 
+- `local_gnn.py` : estimate Genetic Nearest Neighours retrieved and adapted from [Kelleher et al. 2019](https://www.nature.com/articles/s41588-019-0483-y)
+- `job` : deploy snakefile on IFB clusters
+
+```ruby
+```
+
 ## :computer: Correlation with life-history traits
 
 :file_folder: Files:
