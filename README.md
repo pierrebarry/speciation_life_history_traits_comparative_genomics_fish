@@ -186,7 +186,7 @@ As DILS accepted input as FASTA, we need to convert VCF to FASTA per species run
 python3 vcf_to_fasta_gene.py [SPECIES_CODE]
 ```
 
-Then replace the name in the header (here an example with [SPECIES_CODE] = Lmorm):
+Then replace the name in the header (here an example with Lmorm):
 
  ```ruby
 sudo sed -i 's#Lmorm|LmormFa#Fa|LmormFa#g' /DATA/sdb1/Pierre/ABC/Lmorm/Lmorm_DILS_window.fasta
