@@ -1,0 +1,1194 @@
+## IMPORT PACKAGES
+
+import os
+#import numpy as np
+from itertools import product
+
+
+## Get heterozygosity estimated from GenomeScope as prior in GATK - HaplotypeCaller
+#def get_heterozygosity(sample):
+#	with open("/GenomeScope/Summary_GenomeScope.txt","r") as f:
+#		for line in f:
+#			if line.split(";")[3]==sample:
+#				het=line.split(";")[5]
+#	return het
+#get_heterozygosity("DlabrFa3")	
+
+def get_input_gvcf(species):
+	SAMPLES_sp=[SAMPLES[i] for i in range(len(SAMPLES)) if SAMPLES[i][0:5]=="species"]
+	L=[]
+	for i in range(len(SAMPLES_sp)):
+		L+=["/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{"+species+"}/VariantCalling/"+SAMPLES_sp[i]+"_gvcf_first.g.vcf"]
+	L=np.asmatrix(L)
+	with open("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/"+species+"/VariantCalling/name.list","wb") as f:
+		for line in L:
+			np.savetxt(f,line,fmt='%s',delimiter=";")
+
+def get_input_recal_gvcf(species):
+	SAMPLES_sp=[SAMPLES[i] for i in range(len(SAMPLES)) if SAMPLES[i][0:5]=="species"]
+	L=[]
+	for i in range(len(SAMPLES_sp)):
+		L+=["/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{"+species+"}/VariantCalling/"+SAMPLES_sp[i]+"_gvcf_recal.g.vcf"]
+	L=np.asmatrix(L)
+	with open("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/"+species+"/VariantCalling/name.list","wb") as f:
+		for line in L:
+			np.savetxt(f, line, fmt='%s', delimiter=";")
+
+## COMPUTE COMBINATION OF SAMPLES AND SPECIES
+
+test=0
+if test==1:
+    SAMPLES=['SpilcFa1']
+    SPECIES=['Spilc']
+else: 
+    SPECIES=[
+            #'Spilc'
+	    # 'Eencr',
+	    # 'Hgutt'
+	    # 'Mmerl'
+	    # 'Scabr'
+	    # 'Dlab',
+	    # 'Msurm'
+            # 'Lmorm'
+	    # 'Dpunt'
+	    # 'Peryt'
+	    # 'Cjuli'
+	    # 'Ssard'
+	    # 'Pminu',
+	    # 'Cgale'
+	    # 'Aboye'
+	    # 'Afall'
+	     'Gnige'
+	    # 'Scine'
+	    # 'Lbude'
+	    # 'Styph'
+	    # 'Scant'
+	    ]
+    LOCA=[
+	  #'Fa',
+	  'Li',
+	  'Mu',
+	  'Fa',
+	  'Ga'
+	  ]
+
+    NUMBER=['1','2','3','4','5','6']
+    
+    SAMPLES=[]
+    for i in range(len(SPECIES)):
+        for j in range(len(LOCA)): 
+            for k in range(len(NUMBER)):
+                SAMPLES+=[SPECIES[i]+LOCA[j]+NUMBER[k]]
+  
+
+    SAMPLES_1=[SAMPLES[i] for i in range(len(SPECIES)*len(NUMBER)*len(LOCA)) if os.path.exists('/share/tycho_poolz1/pagagnaire/backup/COGEDIV_Save/NovaSeq6000_S4_COGEDIV_Run1_50-202125337_WGS/'+SAMPLES[i]+'_R1_001.fastq.gz')==True] 
+    SAMPLES_2=[SAMPLES[i] for i in range(len(SPECIES)*len(NUMBER)*len(LOCA)) if os.path.exists('/share/tycho_poolz1/pagagnaire/backup/COGEDIV_Save/NovaSeq6000_S4_COGEDIV_Run2_50-269605115_WGS/'+SAMPLES[i]+'_R1_001.fastq.gz')==True]
+
+    for i in range(len(SAMPLES_1)):
+        if SAMPLES_1[i][0:4]=="Dlab":
+           SAMPLES_1[i]=str("Dlabr"+SAMPLES_1[i][4:6]+SAMPLES_1[i][6])
+
+    SAMPLES=SAMPLES_1+SAMPLES_2
+
+    SPECIES=[
+		'Gnige'
+		#'Afall'
+		#"Aboye"
+                #'Spilc'
+		# 'Eencr',
+		# 'Hgutt'
+		# 'Mmerl'
+		# 'Scabr'
+		# 'Dlabr',
+		# 'Msurm'
+		# 'Lmorm'
+		# 'Dpunt'
+		# 'Peryt'
+		# 'Cjuli'
+		# 'Ssard'
+		# 'Cgale'
+		# 'Scine'
+		# 'Lbude'
+		# 'Styph'
+		# 'Scant'
+	   ]
+    
+    #SAMPLES=['DpuntLi4B',
+    #         'HguttGa6B',
+    #         'HguttMu3B',
+    #	     'ScabrGa5B',
+    #         'StyphGa4B']
+
+    #SPECIES=['Dpunt',
+    # 	     'Hgutt',
+    #         'Scabr',
+    #	     'Styph']
+
+    def filter_combinator(combinator, blacklist):
+        def filtered_combinator(*args, **kwargs):
+            for wc_comb in combinator(*args, **kwargs):
+                # Use frozenset instead of tuple
+                # in order to accomodate
+                # unpredictable wildcard order
+                if frozenset(wc_comb) not in blacklist:
+                   yield wc_comb
+        return filtered_combinator
+
+
+    forbidden={'start'}
+    for i in range(len(SPECIES)):
+        for j in range(len(SAMPLES)):
+            if SPECIES[i]!=SAMPLES[j][0:5]:
+               forbidden|={frozenset({("sample",SAMPLES[j]),("species",SPECIES[i])})}
+
+
+    forbidden.remove('start')
+    filtered_product = filter_combinator(product, forbidden)
+
+
+#SPECIES=['Scant']
+#output = subprocess.check_output("ls /share/tycho_poolz1/pagagnaire/COGEDIV/mtalbi/VCF_phased/"+SPECIES[0]+"/ | grep '.bcf$' | rev | cut -c5- | rev | sed 's/.*_//'", shell=True)
+#out=output.decode().split('\n')
+#del out[-1]
+#INTERVALS=out
+#SAMPLES=['DlabrLi3','DlabrLi4']
+#SPECIES=['Dlabr']
+print(SPECIES)
+## SNAKEMAKE PROCESS
+#INTERVALS=[INTERVALS[0]]
+#print(INTERVALS)
+#INTERVALS=['198','88684']
+
+#INTERVALS=range(8628)
+#INTERVALS=range(3)
+
+#text_file = open("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/Spilc/VariantCalling/merge_vcf/split_files", "r")
+#SPLIT = text_file.read().split('\n')
+#SPLIT.remove('')
+
+#All
+rule all:
+	input:
+		#expand(directory("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{sample}"),filtered_product,sample=SAMPLES,species=SPECIES),
+		#flagstat_picard=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_flagstat_picard.txt",sample=SAMPLES,species=SPECIES),
+		#samtools_stats_picard=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_samtools_stats_picard.stats",sample=SAMPLES,species=SPECIES),
+		#plot_samtools_picard=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_plotsamtools_picard.html",sample=SAMPLES,species=SPECIES),
+		#markdup_rg_picard=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_markdup_rg_picard.bam",filtered_product,sample=SAMPLES,species=SPECIES),
+		#markdup_picard=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_markdup_picard.bam",filtered_product,sample=SAMPLES,species=SPECIES),
+		#ref_dict=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.dict",filtered_product,species=SPECIES)		
+		#gvcf_first=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{sample}/{sample}_gvcf_first.g.vcf",filtered_product,sample=SAMPLES,species=SPECIES),
+		#realign_bam=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{sample}/{sample}_realign_bam.bam",filtered_product,sample=SAMPLES,species=SPECIES)
+		#combined_gvcfs_directory=expand(directory("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling"),species=SPECIES)
+		#interval_list=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/interval_{species}.list",species=SPECIES),
+		#name=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/name_{species}.txt",species=SPECIES)
+		#output_file=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/MitoZ/{sample}",sample=SAMPLES,species=SPECIES)
+		#1
+		#touch_combined=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_{intervals}",species=SPECIES,intervals=INTERVALS),
+		#1
+		#combined_gvcfs=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/combined_gvcfs_{species}.g.vcf",species=SPECIES)
+		#1
+		#joint_gvcf_first=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/single_vcf/{species}_{intervals}_joint_gcvf_first.vcf",species=SPECIES,intervals=INTERVALS)
+		#1
+		#vcf_first=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/merge_vcf/{species}_{split}_joint_gvcf_first.vcf",species=SPECIES,split=SPLIT)
+		#align_bam_picard=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_align_bam_picard.bam",filtered_product,sample=SAMPLES,species=SPECIES)
+		#align_sam=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_align.sam",filtered_product,sample=SAMPLES,species=SPECIES)
+		#blast_out=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/MitoZ/{sample}/mitogenome_{sample}.fa",species=SPECIES,sample=SAMPLES)
+		#1
+		vcf_first=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VCF/{species}_joint_gvcf_first.vcf.gz",species=SPECIES),
+		vcf_indel5bp=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VCF/{species}_indel5bp.vcf.gz",species=SPECIES),
+		vcf_indel5bp_snponly=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VCF/{species}_indel5bp_snponly.vcf.gz",species=SPECIES),
+		vcf_indel5bp_snponly_missing1=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VCF/{species}_indel5bp_snponly_missing1.vcf.gz",species=SPECIES),
+		#header="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/TWISTT/header.txt",
+                #phased_vcf_header=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/TWISTT/{species}_phased_{intervals}_header.bcf",species=SPECIES,intervals=INTERVALS),
+                #geno=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/TWISTT/{species}_{intervals}.geno.gz",species=SPECIES,intervals=INTERVALS),
+                #phyml=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/TWISTT/{species}_{intervals}.phyml_bionj.w50.trees.gz",species=SPECIES,intervals=INTERVALS),
+                #groups=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/TWISTT/groups.tsv",species=SPECIES,intervals=INTERVALS),
+		#twistt_weights=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/TWISTT/{species}_{intervals}.weights.csv.gz",species=SPECIES,intervals=INTERVALS)
+		#groups=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/TWISTT/groups_{intervals}.tsv",species=SPECIES,intervals=INTERVALS)
+		#phyml=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/TWISTT/{species}_{intervals}.phyml_bionj.w50.trees.gz",species=SPECIES,intervals=INTERVALS)
+		#stats_vcf=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VCF/vcf_stats_{species}",species=SPECIES)
+		#header=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/TWISTT/header_{intervals}.txt",species=SPECIES,intervals=INTERVALS),
+		#first_line=expand("first_line_{species}",species=SPECIES)
+
+## K-mer, genetic diversity and genome length
+
+#rule extract_fastp_info:
+#	output:
+#		output_fastp="{species}_{sample}"
+#	message:
+#		"Extracting fastp informations : {wildcards.sample}"
+#	shell:
+#		"python fastp/Extract_fastp_info.py {wildcards.species} {wildcards.sample} && "
+#		"touch {wildcards.species}_{wildcards.sample}"
+
+
+rule merge_fastq:
+	input:
+		fastp_R1="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/fastp/{sample}_R1_fastp.fastq.gz",
+		fastp_R2="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/fastp/{sample}_R2_fastp.fastq.gz"
+	output:
+		merge_fastq="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/GenomeScope/{sample}_merge_fastp.fastq"
+	message:
+		"Merge fastq : {wildcards.sample}"
+	shell:
+		"cat {input.fastp_R1} {input.fastp_R2} > /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/GenomeScope/{wildcards.sample}_merge_fastp.fastq.gz && "
+		"gzip -d /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/GenomeScope/{wildcards.sample}_merge_fastp.fastq.gz"
+
+
+rule jellyfish_process:
+	input:
+		merge_fastq="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/GenomeScope/{sample}_merge_fastp.fastq"
+	output:
+		reads_jellyfish="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/GenomeScope/{sample}_reads_jellyfish"
+	message:
+		"Jellyfish processing - Counting k-mer : {wildcards.sample}"
+	shell : 
+		"jellyfish "
+		"count -C "
+		"-m 21 "
+		"-s 1000000 "
+		"-t 8 "
+		"{input.merge_fastq} "
+		"-o {output.reads_jellyfish}"
+
+rule jellyfish_histogram:
+	input:
+		reads_jellyfish="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/GenomeScope/{sample}_reads_jellyfish"
+	output:
+		histo_jellyfish="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/GenomeScope/{sample}_histo_jellyfish.histo"
+	message:
+		"Jellyfish processing - Exporting the histogram : {wildcards.sample}"
+	shell : 
+		"jellyfish "
+		"histo "
+		"-t 10 "
+		"{input.reads_jellyfish} > {output.histo_jellyfish} && "
+		"rm /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/GenomeScope/{wildcards.sample}_reads_jellyfish && "
+		"rm /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/GenomeScope/{wildcards.sample}_merge_fastp.fastq"
+
+rule GenomeScope:
+	input:
+		histo_jellyfish="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/GenomeScope/{sample}_histo_jellyfish.histo"
+	output:
+		plot_genomescope="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/GenomeScope/{sample}_plot.pdf",
+		model_genomescope="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/GenomeScope/{sample}_model.txt",
+		plotlog_genomescope="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/GenomeScope/{sample}_plot.log.pdf",
+		progress_genomescope="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/GenomeScope/{sample}_progress.txt",
+		summary_genomescope="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/GenomeScope/{sample}_summary.txt"
+	message:
+		"GenomeScope processing - Fitting the model : {wildcards.sample}"
+	shell:
+		"mv {input.histo_jellyfish} ~ && "
+		"R --vanilla --slave --args "
+		"{wildcards.sample}_histo_jellyfish.histo "
+		"21 "
+		"150 "
+		"OutputGenomeScope "
+		"1000000 "
+		"Summary "
+		"{wildcards.sample} "
+		"< ~/GenomeScope/genomescope_cluster.R && "
+		"mv OutputGenomeScope/model.txt {output.model_genomescope} && "
+		"mv OutputGenomeScope/plot.log.pdf {output.plotlog_genomescope} && "
+		"mv OutputGenomeScope/plot.pdf {output.plot_genomescope} && "
+		"mv OutputGenomeScope/progress.txt {output.progress_genomescope} && "
+		"mv OutputGenomeScope/summary.txt {output.summary_genomescope} && "
+		"mv {wildcards.sample}_histo_jellyfish.histo /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/GenomeScope"			
+
+## MitoZ - MBB container -need to load MitoZ singularity image
+
+rule mitoz:
+	input:
+		fastp_R1="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/fastp/{sample}_R1_fastp.fastq.gz",
+		fastp_R2="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/fastp/{sample}_R2_fastp.fastq.gz",	
+		fastp_file="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/mitoz_run/data_tmp/",
+		result_file="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/mitoz_run/result_tmp/",
+		#result_file="/home/pbarry/result_tmp/",
+		mitoz_image="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/mitoz_run/ok_mitoz/mitoz.simg",
+		#mitoz_image="/home/pbarry/ok_mitoz/mitoz.simg",
+		config="/home/pbarry/ok_mitoz/params.yml"
+		#config="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/mitoz_run/ok_mitoz/params.yml"
+	output:
+		blast_out="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/MitoZ/{sample}/mitogenome_{sample}.fa"
+	message:
+		"Run MitoZ : {wildcards.sample}"
+	threads: 4
+	shell:
+		#"zcat {input.fastp_R1} | sed -n 1,12000000p > {input.fastp_file}test_R1.fastq && "
+		#"zcat {input.fastp_R2} | sed -n 1,12000000p > {input.fastp_file}test_R2.fastq && "
+		"mkdir {input.fastp_file}{wildcards.sample}/ && "
+		"mkdir {input.result_file}{wildcards.sample}/ && "
+		"cp {input.fastp_R1} {input.fastp_file}{wildcards.sample}/ && "
+		"cp {input.fastp_R2} {input.fastp_file}{wildcards.sample}/ && "
+		"module load singularity/3.1 && "
+		"singularity exec "
+		"-B {input.fastp_file}{wildcards.sample}/:/Data "
+		"-B {input.result_file}{wildcards.sample}/:/Results "
+		"{input.mitoz_image} "
+		"snakemake -s /workflow/Snakefile all "
+		"-d {input.result_file}{wildcards.sample}/ "
+		"--configfile {input.config} "
+		"--cores {threads} || true && "
+		"""awk '/^>/{{print ">" "{wildcards.sample}"; next}} 1' {input.result_file}{wildcards.sample}/mitoz_findmitoscaf.result/mitoz_findmitoscaf.mitogenome.fa > {input.result_file}{wildcards.sample}/mitogenome_{wildcards.sample}.fa && """
+		"blastn "
+		"-query {input.result_file}{wildcards.sample}/mitoz_findmitoscaf.result/mitoz_findmitoscaf.hmmtblout.besthit.sim.filtered.high_abundance_10.0X.reformat.sorted.Not-picked.fa "
+		"-out {input.result_file}{wildcards.sample}/mitoz_findmitoscaf.result/results.out "
+		"-db nt "
+		"-remote "
+		"-outfmt '6 qsedid stitle length pident nident mismatch gapopen gaps bitscore score evalue' && "
+		"rm -r {input.fastp_file}{wildcards.sample}/* && "
+		"rm {input.result_file}{wildcards.sample}/megahit_PE/assembly.contigs.fa && "
+		"rm -r {input.result_file}{wildcards.sample}/megahit_PE/intermediate_contigs/ && "
+		"mv {input.result_file}{wildcards.sample}/* /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/MitoZ/{wildcards.sample}/"
+
+## Reference mapping
+
+rule index_reference:
+	input:
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output:
+		"/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.amb",
+		"/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.ann",
+		"/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.bwt",
+		"/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.pac",
+		"/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.sa"
+	message:
+		"Index reference : {wildcards.species}"
+	shell:
+		"bwa index "
+		"-p /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/Reference_Genome/referencegenome_{wildcards.species} "
+		"-a bwtsw "
+		"{input.reference_genome}"
+
+#rule create_dir:
+#	input:
+#		fastp_R1="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/fastp/{sample}_R1_fastp.fastq.gz"
+#	output:
+#		directory("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}")
+#	message:
+#		"Create directory for reference mapping : {wildcards.sample}"
+#	shell:
+#		"mkdir /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/Mapping/{wildcards.sample}"
+
+rule reference_mapping:
+	input:
+		fastp_R1="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/fastp/{sample}_R1_fastp.fastq.gz",
+		fastp_R2="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/fastp/{sample}_R2_fastp.fastq.gz"
+	output:
+		align_sam="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_align.sam"
+	message:
+		"Reference mapping: {wildcards.sample}"
+	shell:
+		"bwa mem "
+		"-M "
+		"-t 16 "
+		"/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/Reference_Genome/referencegenome_{wildcards.species} "
+		"{input.fastp_R1} "
+		"{input.fastp_R2} "
+		"> {output.align_sam}"
+
+rule convert_sam:
+	input:
+		align_sam="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_align.sam"
+	output:
+		align_bam_picard="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_align_picard.bam"
+	message:
+		"Convert sam to bam, index and clean up : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/picard SortSam "
+		"I={input.align_sam} "
+		"O={output.align_bam_picard} "
+		"SO=coordinate "
+		"CREATE_INDEX=true "
+		"VALIDATION_STRINGENCY=LENIENT"
+
+rule MarkDuplicates:
+	input:
+		align_bam_picard="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_align_picard.bam"
+	output:
+		markdup_picard="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_markdup_picard.bam"	
+	message:
+		"Markdup with picard : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/picard MarkDuplicates "
+		"I={input.align_bam_picard} "
+		"O={output.markdup_picard} "
+		"ASSUME_SORTED=TRUE "
+		"REMOVE_DUPLICATES=FALSE "
+		"CREATE_INDEX=TRUE "
+		"METRICS_FILE=/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/Mapping/{wildcards.sample}/{wildcards.sample}_duplicate_metrics.txt "
+		"VALIDATION_STRINGENCY=LENIENT"
+
+rule add_rg_group:
+	input:
+		markdup_picard="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_markdup_picard.bam"
+	output:
+		markdup_rg_picard="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_markdup_rg_picard.bam"	
+	message:
+		"Add read group : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/picard AddOrReplaceReadGroups "
+                "I={input.markdup_picard} "
+                "O={output.markdup_rg_picard} "
+                "RGPL=ILLUMINA "
+	        "RGLB=lib "
+	        "RGPU=genewiz "
+                "RGSM={wildcards.sample}"
+
+#rule samtools_flagstats_picard:
+#	input:
+#		markdup_rg_picard="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}_markdup_rg_picard.bam"
+#	output:
+#		flagstat_picard="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_flagstat_picard.txt"
+#	message:
+#		"Flagstat (picard) : {wildcards.sample}"
+#	shell:
+#		"samtools "
+#		"flagstat "
+#		"{input.markdup_rg_picard} > "
+#		"{output.flagstat_picard}"
+
+#rule samtools_stats:
+#	input:
+#		markdup_rg_picard="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}_markdup_rg_picard.bam"
+#	output:
+#		samtools_stats_picard="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_samtools_stats_picard.stats"
+#	message:
+#		"Samtools stats (picard) : {wildcards.sample}"
+#	shell:
+#		"samtools "
+#		"stats "
+#		"{input.markdup_rg_picard} > "
+#		"{output.samtools_stats_picard}"
+
+#rule plot_bamstats:
+#	input:
+#		samtools_stats_picard="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_samtools_stats_picard.stats"
+#	output:
+#		plot_samtools_picard="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_plotsamtools_picard.html"
+#	message:
+#		"Plot bamstats (picard) : {wildcards.sample}"
+#	shell:
+#		"plot-bamstats "
+#		"-p "
+#		"/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/Mapping/{wildcards.sample}/{wildcards.sample}_plotsamtools_picard "
+#		"{input.samtools_stats_picard}"
+
+#rule qualimap:
+##	input:
+#		markdup_rg_picard="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}_markdup_rg_picard.bam"
+#	output:
+#		touch("qualimap.done")
+#	message:
+#		"Qualimap (picard) : {wildcards.sample}"
+#	shell : 
+#		"qualimap " 
+#		"bamqc "
+#		"-bam {input.markdup_rg_picard}"	
+
+## GATK
+
+#rule create_dir_for_gatk:
+#	input:
+#		markdup_rg_picard="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_markdup_rg_picard.bam"
+#	output:
+#		directory("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{sample}")
+#	message:
+#		"Create directory for variant calling: {wildcards.sample}"
+#	shell:
+#		"mkdir /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/VariantCalling/{wildcards.sample}"
+
+rule create_dict_and_index:
+	input:
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output:
+		ref_dict="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.dict"
+	message:
+		"Create dictionnary : {wildcards.species}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-3.9.1/bin/picard CreateSequenceDictionary "
+		"R={input.reference_genome} "
+		"O={output.ref_dict} && "
+		"samtools faidx {input.reference_genome}"
+
+
+rule generate_gvcf_first:
+	input:
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa",
+		markdup_rg_picard="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_markdup_rg_picard.bam"
+		#**get_heterozygosity({sample})
+	output: 
+		gvcf_first="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{sample}/{sample}_gvcf_first.g.vcf",
+		realign_bam="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{sample}/{sample}_realign_bam.bam"		
+	message:
+		"Generate GVCF first : {wildcards.sample}"
+	shell:
+		"samtools index {input.markdup_rg_picard} && "
+		"/home/pbarry/.pyenv/versions/miniconda3-3.9.1/bin/gatk HaplotypeCaller "
+		"-R {input.reference_genome} "
+		"-I {input.markdup_rg_picard} "
+		"-O {output.gvcf_first} "
+		"-bamout {output.realign_bam} "
+		#"--heterozygosity 0.004023185 "
+		"-ERC GVCF "
+		"-G StandardAnnotation "
+		"-G AS_StandardAnnotation "
+		"-G StandardHCAnnotation"
+
+rule get_interval:
+	input:
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output:
+		interval_list="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/interval_{species}.list"
+	message:
+		"Generate interval for GenomicsDBImport : {wildcards.species}"
+	shell:
+                "grep '>' {input.reference_genome} | cut -d '>' -f 2 >> inter && "
+		"cut -f1 -d' ' inter >> {output.interval_list} && "
+		"rm inter"
+
+rule get_name:
+	input:
+		interval_list="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/interval_{species}.list"
+		#sp="'{species}'"
+	output:
+		name="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/name_{species}.txt"
+	message:
+		"Get names : {wildcards.species}"
+	shell:
+		"R --vanilla --slave --args "
+		"{wildcards.species} "
+		"</share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/Code/get_name.R"
+
+# Use with Dlabr
+
+#rule prepare_gd:
+#	shell:
+#		"mkdir /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/interval_split/ && "
+#		"INT=$(wc -l interval_Msurm.list | awk '{print $1}') && "
+#		"cd /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/interval_split/ && "
+#		"split -l 1 ../interval_Msurm.list && "
+#		"i=0 && "
+#		"for fi in x*;do mv "$fi" $i.list ; i=$((i+1)) ; done" 
+
+rule joint_genotyping_first:
+	input:
+		#gvcf_first=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{sample}/{sample}_gvcf_first.g.vcf",sample=SAMPLES,species=SPECIES),
+		name="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/name_{species}.txt",
+                #interval_list="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/interval_{species}.list"
+		interval_list="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/interval_split/{intervals}.list"
+	output:
+		#combined_gvcfs_directory=expand(directory("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling"),species=SPECIES),
+		touch_combined="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_{intervals}",
+		joint_genotyping_files="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/Joint_Genotyping_{intervals}"
+	message:
+		"Combined gvcfs : {wildcards.species} - {wildcards.intervals}"
+	#params:
+	#	files=lambda wildcards, input: " -V ".join(input.gvcf_first)
+	shell:
+		#"mkdir /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/VariantCalling/temp_{wildcards.intervals} && "
+		"/home/pbarry/.pyenv/versions/miniconda3-3.9.1/bin/gatk GenomicsDBImport "
+		#"-V {params.files} "
+		"--sample-name-map {input.name} "
+		#"--max-num-intervals-to-import-in-parallel 25 "
+		#"--tmp-dir:/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/VariantCalling/temp_{wildcards.intervals} "
+                "--genomicsdb-workspace-path {output.joint_genotyping_files} "
+		"--overwrite-existing-genomicsdb-workspace "
+                #"-L {input.interval_list} && "
+		"-L {input.interval_list} && "
+		"touch {output.touch_combined}"
+		#"rm -r /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/VariantCalling/temp_{wildcards.intervals}"
+
+# Use with Spilc
+#rule combine_gvcfs:
+#	input:
+#		#gvcf_first=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{sample}/{sample}_gvcf_first.g.vcf",sample=SAMPLES,species=SPECIES),
+#		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa",
+#		name="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/name_{species}.list"
+#	output:
+#		combined_gvcfs="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/combined_gvcfs_{species}.g.vcf"
+#	message:
+#		"Combined gvcfs : {wildcards.species}"
+#	#params:
+#	#	files=lambda wildcards, input: " -V ".join(input.gvcf_first)
+#	shell:
+#		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk CombineGVCFs "
+#		"-R {input.reference_genome} "
+#		"-V {input.name} "
+#		"-O {output.combined_gvcfs}"
+
+rule genotype_gvcfs:
+	input:
+		#genotype_database=directory("/share/tycho_poolZ1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/Joint_Genotyping"),
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa",
+		touch_combined="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_{intervals}"
+	output: 
+		joint_gvcf_first="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/single_vcf/{species}_{intervals}_joint_gcvf_first.vcf"		
+	message:
+		"Joint genotyping first : {wildcards.species} - {wildcards.intervals}"
+	shell:
+		"cd /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/VariantCalling && "
+		"/home/pbarry/.pyenv/versions/miniconda3-3.9.1/bin/gatk GenotypeGVCFs "
+		"-R {input.reference_genome} "
+		"-V gendb://Joint_Genotyping_{wildcards.intervals} "
+		"-G StandardAnnotation "
+		#"-newQual "
+		"-O {output.joint_gvcf_first}"
+
+rule merge_gvcfs_first:
+	input:
+		#split_list="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/merge_vcf/{split}"
+		split_list="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/single_vcf/list_vcf"
+	output:
+		#vcf_first="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/merge_vcf/{species}_{split}_joint_gvcf_first.vcf"
+		vcf_first="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VCF/{species}_joint_gvcf_first.vcf.gz"
+	message:
+		"Merge all single vcfs intervals : {wildcards.species}"
+	shell:
+		#"ls /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/VariantCalling/single_vcf/ | grep 'vcf$' > /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/VariantCalling/single_vcf/list_vcf && "
+		#"ls /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/VariantCalling/single_vcf/ | grep 'vcf$' | awk '{print length, $0}' | sort -n | cut -d' ' -f2- > /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/VariantCalling/single_vcf/list_vcf && "
+		#♦" cd /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/VariantCalling/single_vcf/ && "
+		#"/home/pbarry/.pyenv/versions/miniconda3-3.9.1/bin/gatk MergeVcfs "
+		#"-I {input.split_list} "
+		#"-O {output.vcf_first}"
+		"cd /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/VariantCalling/single_vcf/ && "
+		"vcf-concat -f {input.split_list} | bgzip -c > {output.vcf_first}"
+
+
+############################## VCF
+
+rule filter_around_indels:
+	input:
+		vcf="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VCF/{species}_joint_gvcf_first.vcf.gz"
+	output:
+		vcf_indel5bp="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VCF/{species}_indel5bp.vcf.gz"
+	message:
+		"Filter VCF around indels : {wildcards.species}"
+	shell:
+		"bcftools filter "
+		"-g 5 "
+		"--output {output.vcf_indel5bp} "
+		"{input.vcf}"
+
+rule filter_snp_biallelic:
+        input:
+                vcf_indel5bp="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VCF/{species}_indel5bp.vcf.gz"
+        output:
+                vcf_indel5bp_snponly="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VCF/{species}_indel5bp_snponly.vcf.gz"
+        message:
+                "Kept only biallelic SNP : {wildcards.species}"
+        shell:
+                "vcftools "
+                "--gzvcf {input.vcf_indel5bp} "
+                "--remove-indels "
+		"--max-alleles 2 "
+		"--recode "
+		"--stdout | "
+		"bgzip > {output.vcf_indel5bp_snponly}"
+
+rule filter_missing_data:
+        input:
+                vcf_indel5bp_snponly="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VCF/{species}_indel5bp_snponly.vcf.gz"
+        output:
+                vcf_indel5bp_snponly_missing1="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VCF/{species}_indel5bp_snponly_missing1.vcf.gz"
+        message:
+                "Remove missing data : {wildcards.species}"
+	params:
+		per=1.0
+	shell:
+                "vcftools "
+                "--gzvcf {input.vcf_indel5bp_snponly} "
+                "--max-missing {params.per} "
+		"--recode "
+                "--stdout | "
+                "bgzip > {output.vcf_indel5bp_snponly_missing1}"
+
+rule vcf_stats:
+	input:
+		vcf_indel5bp_snponly="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VCF/{species}_indel5bp_snponly.vcf.gz"
+	output:
+		stats_vcf="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VCF/vcf_stats_{species}"
+	message:
+		"Vcf stats : {wildcards.species}"
+	shell:
+		"cd /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/VCF/ && "
+		"bcftools stats {input.vcf_indel5bp_snponly} > vcf_stats_{wildcards.species} && "
+		"rtg vcfstats {input.vcf_indel5bp_snponly} > vcf_stats_{wildcards.species}_rtg && "
+		"vcftools --depth --gzvcf {input.vcf_indel5bp_snponly} --out indiv_{wildcards.species} && "
+		"vcftools --site-mean-depth --gzvcf {input.vcf_indel5bp_snponly} --out {wildcards.species} && " 
+		"vcftools --site-quality --gzvcf {input.vcf_indel5bp_snponly} --out {wildcards.species} && "
+		"R CMD BATCH /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/Code/GET_STATS_VCF.R" 
+
+rule get_input_twistt:
+	input:
+		phased_vcf="/share/tycho_poolz1/pagagnaire/COGEDIV/mtalbi/VCF_phased/{species}/{species}_phased_{intervals}.bcf",
+		parseVCF="/home/pbarry/TWISTT/parseVCF.py",
+		phyml_sliding_windows="/home/pbarry/TWISTT/phyml_sliding_windows.py"
+	output:
+		header="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/TWISTT/header_{intervals}.txt"
+		#groups="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/TWISTT/groups_{intervals}.tsv"
+		#twistt_weights="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/TWISTT/{species}_{intervals}.weights.csv.gz"
+	message:
+		"Input twistt : {wildcards.species} - {wildcards.intervals}"
+	priority: 50
+	shell:
+		"echo -e '##contig=<ID={wildcards.intervals}>' >> {output.header} && "
+		"cp {input.phased_vcf} /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/TWISTT/ && "
+		"bcftools annotate -h {output.header} {input.phased_vcf} -o /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/TWISTT/{wildcards.species}_phased_{wildcards.intervals}_header.bcf && "
+		"python {input.parseVCF} -i /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/TWISTT/{wildcards.species}_phased_{wildcards.intervals}_header.bcf --skipIndels | gzip > /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/TWISTT/{wildcards.species}_{wildcards.intervals}.geno.gz && "
+		"python {input.phyml_sliding_windows} -T 10 -g /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/TWISTT/{wildcards.species}_{wildcards.intervals}.geno.gz --prefix /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/TWISTT/{wildcards.species}_{wildcards.intervals}.phyml_bionj.w50 -w 50 --windType sites --model GTR --optimise n && "
+		"zcat /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/TWISTT/{wildcards.species}_{wildcards.intervals}.phyml_bionj.w50.trees.gz | head -n 1 > first_line"
+		#"python --version && "
+		#"python {input.get_groups} first_line {wildcards.species} {wildcards.intervals}"
+		#"python twistt.py -t {output.phyml} -w {output.twistt_weights} -g Fa -g Ga -g Li -g Mu --groupsFile {output.groups}"
+
+rule get_groups:
+	input:
+		get_groups="/home/pbarry/TWISTT/get_groups.py"
+	output:
+		first_line="first_line_{species}"
+	message:
+		"Get groups for twistt : {wildcards.species}"
+	priority: 2
+	shell:
+		#"zcat /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/TWISTT/{wildcards.species}_{wildcards.intervals}.phyml_bionj.w50.trees.gz | head -n 1 > {output.first_line} && "
+		"python {input.get_groups} first_line {wildcards.species}"
+rule twistt:
+	input:
+		#phyml="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/TWISTT/{species}_{intervals}.phyml_bionj.w50.trees.gz",
+		get_groups="/home/pbarry/TWISTT/get_groups.py",
+		twistt_code="/home/pbarry/TWISTT/twistt.py"
+	output:
+		twistt_weights="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/TWISTT/{species}_{intervals}.weights.csv.gz"
+	message:
+		"Twistt : {wildcards.species} - {wildcards.intervals}"
+	priority: 1
+	shell:
+		#"zcat /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/TWISTT/{wildcards.species}_{wildcards.intervals}.phyml_bionj.w50.trees.gz | head -n 1 > first_line && "
+		#"python {input.get_groups} first_line {wildcards.species} {wildcards.intervals} && "
+                "python {input.twistt_code} -t /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/TWISTT/{wildcards.species}_{wildcards.intervals}.phyml_bionj.w50.trees.gz -w {output.twistt_weights} -g Fa -g Ga -g Li -g Mu --groupsFile /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/TWISTT/groups_{wildcards.species}.tsv"
+
+
+########################################### Genotype refinement
+
+# GenotypePosteriors
+
+rule genotype_posteriors_first:
+	input:
+		joint_gvcf_first="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_joint_gcvf_first.vcf",
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output: 
+		gvcf_genotype_posterior_first="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_gvcf_genotype_posterior_first.vcf"		
+	message:
+		"Compute genotype posteriors first : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk CalculateGenotypePosteriors "
+		"-R {input.reference_genome} "
+		"-V {input.joint_gvcf_first} "
+		"-o {output.gvcf_genotype_posterior_first} "
+		"--skipPopulationPriors "
+		"--skipFamilyPriors"
+
+# Variant filtering
+##SNP
+
+rule selectvariants_snp_first:
+	input:
+		gvcf_genotype_posterior_first="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_gvcf_genotype_posterior_first.vcf",		
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output: 
+		gvcf_refineSNP="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_gvcf_refineSNP_first.vcf"		
+	message:
+		"Select Variant to SNP first : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk SelectVariants "
+		"-nt 16 "
+		"-R {input.reference_genome} "
+		"--variant {input.gvcf_genotype_posterior_first} "
+		"-o {output.gvcf_refineSNP} "
+		"-selectType SNP"
+
+rule filtervariants_snp_first:
+	input:
+		gvcf_refineSNP="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_gvcf_refineSNP_first.vcf",
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output: 
+		gvcf_refineSNP_HQ="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_gvcf_refineSNP_HQ_first.vcf"		
+	message:
+		"Variant Filtration to SNP first : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk VariantFiltration "
+		"-R {input.reference_genome} "
+		"--variant {input.gvcf_refineSNP} "
+		"-o {output.gvcf_refineSNP_HQ} "
+		"--filterExpression 'QD < 10.0 || FS > 10.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0' "
+		"--filterName 'lowQ' "
+		"--genotypeFilterExpression 'GQ < 20.0' " 
+		"--genotypeFilterName 'lowGQ'"
+
+##Indel
+
+rule selectvariants_indel_first:
+	input:
+		gvcf_genotype_posterior_first="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_gvcf_genotype_posterior_first.vcf",		
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output: 
+		gvcf_refineINDEL="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_gvcf_refineINDEL_first.vcf"		
+	message:
+		"Select Variant to INDEL first : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk SelectVariants "
+		"-nt 16 "
+		"-R {input.reference_genome} "
+		"--variant {input.gvcf_genotype_posterior_first} "
+		"-o {output.gvcf_refineINDEL} "
+		"-selectType INDEL"
+
+rule filtervariants_indel_first:
+	input:
+		gvcf_refineINDEL="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_gvcf_refineINDEL_first.vcf",
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output: 
+		gvcf_refineINDEL_HQ="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_gvcf_refineINDEL_HQ_first.vcf"		
+	message:
+		"Variant Filtration to INDEL first : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk VariantFiltration "
+		"-R {input.reference_genome} "
+		"--variant {input.gvcf_refineINDEL} "
+		"-o {output.gvcf_refineINDEL_HQ} "
+		"--filterExpression 'QD < 10.0 || FS > 200.0 || ReadPosRankSum < -20.0' "
+		"--filterName 'lowQ' "
+		"--genotypeFilterExpression 'GQ < 20.0' " 
+		"--genotypeFilterName 'lowGQ'"
+		
+## Combine variants
+
+rule combine_variants_first:
+	input:
+		gvcf_refineSNP_HQ="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_gvcf_refineSNP_HQ_first.vcf",	
+		gvcf_refineINDEL_HQ="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_gvcf_refineINDEL_HQ_first.vcf",		
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output: 
+		gvcf_refine_HQ="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_gvcf_refine_HQ_first.vcf"		
+	message:
+		"Combine variants first : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk CombineVariants "
+		"-nt 16 "
+		"-R {input.reference_genome} "
+		"-o {output.gvcf_refine_HQ} "
+		"-V:snp {input.gvcf_refineSNP_HQ} "
+		"-V:indel {input.gvcf_refineINDEL_HQ} "
+		"--filteredrecordsmergetype KEEP_IF_ALL_UNFILTERED "
+		"--genotypemergeoption PRIORITIZE "
+		"-priority snp,indel"	
+
+## Finalize
+
+rule database_vcf_first:
+	input:
+		gvcf_refine_HQ="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_gvcf_refine_HQ_first.vcf",		
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output: 
+		dbase_first="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_dbase_first.vcf"		
+	message:
+		"Finalize variants first : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk SelectVariants "
+		"-nt 16 "
+		"-R {input.reference_genome} "
+		"--variant {input.gvcf_refine_HQ} "
+		"-o {output.dbase_first} "
+		"--excludeFiltered"	
+		
+## BASE RECALIBRATION
+
+# Recalibrate quality scores
+
+# first round
+rule base_recalibration_firstround:
+	input:
+		markdup="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_markdup.bam",
+		dbase_first="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_dbase_first.vcf",		
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output: 
+	        recal_table="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_recal.table"
+	message:
+		"Base recalibration - first round : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk BaseRecalibrator "
+		"-nct 16 "
+		"-R {input.reference_genome} "
+		"-I {input.markdup} "
+		"-knownSites {input.dbase_first} "
+		"-o {output.recal_table}"
+		
+# second round
+rule base_recalibration_secondround:
+	input:
+		markdup="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_markdup.bam",
+		dbase_first="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_dbase_first.vcf",	
+	        recal_table="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_recal.table",		
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output: 
+	    recal_post_table="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_recal_post.table"
+	message:
+		"Base recalibration - second round : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk BaseRecalibrator "
+		"-nct 16 "
+		"-R {input.reference_genome} "
+		"-I {input.markdup} "
+		"-knownSites {input.dbase_first} "
+		"-BQSR {input.recal_table} "
+		"-o {output.recal_post_table}"
+		
+# plot
+rule plot_BQSR:
+	input:
+		markdup="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_markdup.bam",
+	        recal_table="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_recal.table",	
+		recal_post_table="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_recal_post.table",
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output: 
+	        recal_plots="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_recal_plots.pdf"
+	message:
+		"Plot base recalibration : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk AnalyzeCovariates "
+		"-R {input.reference_genome} "
+		"-before {input.recal_table} "
+		"-after {input.recal_post_table} "
+		"-plots {output.recal_plots}"				
+		
+# print reads		
+rule recalibrate_bam:
+	input:
+		markdup="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_markdup.bam",
+	        recal_table="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_recal.table",	
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output: 
+	        recal_bam="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_markdup_recal.bam"
+	message:
+		"Regenerate recalibrate bam : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk PrintReads "
+		"-nct 16 "
+		"-R {input.reference_genome} "
+		"-I {input.markdup} "
+		"-BQSR {input.recal_table} "
+		"-o {output.recal_bam}"
+
+# Haplotype caller after recalibration
+
+rule generate_gvcf_second:
+	input:
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa",
+		recal_bam="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_markdup_recal.bam"
+	output: 
+		gvcf_recal="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{sample}_gcvf_recal.g.vcf"		
+	message:
+		"Generate GVCF after recalibration : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk HaplotypeCaller "
+		"-nct 16 "
+		"-R {input.reference_genome} "
+		"-I {input.recal_bam} "
+		"-o {output.gvcf_recal} "
+		"--heterozygosity 0.005 "
+		"--genotyping_mode DISCOVERY "
+		"--emitRefConfidence GVCF "
+		"--variant_index_type LINEAR "
+		"--variant_index_parameter 128000"		
+		
+rule joint_genotyping_recal:
+	input:
+		#**get_input_recal_gvcf({species}),
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output: 
+		joint_gvcf_recal="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_joint_gcvf_recal.vcf"		
+	message:
+		"Joint genotyping after recalibration : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk GenotypeGVCFs "
+		"-nt 16 "
+		"-R {input.reference_genome} "
+		#"-V {input.variant_list} "
+		"--heterozygosity	0.005 "
+		"-o {output.joint_gvcf_recal}"		
+		
+## VQSR
+
+rule vqsr:
+	input:
+		joint_gvcf_recal="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_joint_gcvf_recal.vcf",
+		dbase_first="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_dbase_first.vcf",
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output: 
+		joint_gvcf_recal="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_joint_gcvf_recal.vcf"		
+	message:
+		"VQSR : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk VariantRecalibrator "
+		"-nt 16 "
+		"-R {input.reference_genome} "
+		"-input {input.joint_gvcf_recal} "
+		"-resource:DB_HQ,known=false,training=true,truth=true,prior=10.0 {input.dbase_first} "
+		"-an DP -an QD -an FS -an SOR -an MQRankSum -an ReadPosRankSum "
+		"-mode SNP "
+		"-tranche 100.0 -tranche 99.9 -tranche 99.0 -tranche 90.0 "
+		"-recalFile ${infolder}/joint_bwa_mem_mdup_IR_recal_SNP.recal "
+		"-tranchesFile ${infolder}/joint_bwa_mem_mdup_IR_recal_SNP.tranches "
+		"-rscriptFile ${infolder}/joint_bwa_mem_mdup_IR_recal_SNP_plots.R" 
+		
+## Final Genotype Refinement
+
+# GenotypePosteriors
+
+rule genotype_posteriors_recal:
+	input:
+		joint_gvcf_recal="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_joint_gcvf_recal.vcf",
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output: 
+		gvcf_genotype_posterior_recal="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_gvcf_genotype_posterior_recal.vcf"		
+	message:
+		"Compute genotype posteriors after recalibration : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk CalculateGenotypePosteriors "
+		"-R {input.reference_genome} "
+		"-V {input.joint_gvcf_recal} "
+		"-o {output.gvcf_genotype_posterior_recal} "
+		"--skipPopulationPriors "
+		"--skipFamilyPriors"		
+
+rule filtervariants_snp_recal:
+	input:
+		gvcf_genotype_posterior_recal="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_gvcf_genotype_posterior_recal.vcf",
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa"
+	output: 
+		gvcf_refineVCF_HQ="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_gvcf_refineVCF_HQ_recal.vcf"		
+	message:
+		"Variant Filtration to SNP after recalibration : {wildcards.sample}"
+	shell:
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk VariantFiltration "
+		"-R {input.reference_genome} "
+		"--variant {input.gvcf_genotype_posterior_recal} "
+		"-o {output.gvcf_refineVCF_HQ} "
+		"--genotypeFilterExpression 'GQ < 30.0' " 
+		"--genotypeFilterName 'lowGQ'"		
+		
+		
+		
+### BAM RULES with SAMTOOLS
+#rule samtools_convert_sam_bam:
+#	input:
+#		align_sam="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_align.sam"
+#	output:
+#		align_bam="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_align.bam"
+#	message:
+#		"Convert sam to bam : {wildcards.sample}"
+#	shell:
+#		"samtools "
+#		"view "
+#		"-b "
+#		"{input.align_sam} "
+#		"-o {output.align_bam}"
+
+#
+
+#rule samtools_sort:
+#	input:
+#		align_bam="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_align.bam"
+#	output:
+#		align_bam_sorted="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_align_sorted.bam"
+#	message:
+#		"Sort bam : {wildcards.sample}"
+#	shell:
+#		"samtools "
+#		"sort "
+#		"-n "
+#		"{input.align_bam} "
+#		"-o {output.align_bam_sorted}"
+
+#rule samtools_fixmate:
+#	input:
+#		align_bam_sorted="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_align_sorted.bam"
+#	output:
+#		fixmate="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_fixmate.bam"
+#	message:
+#		"Fixmate : {wildcards.sample}"
+#	shell:
+#		"samtools "
+#		"fixmate "
+#		"-m "
+#		"{input.align_bam_sorted} "
+#		"{output.fixmate}"
+
+#rule reorder_formarkduplicate:
+#	input:
+#		fixmate="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_fixmate.bam"
+#	output:
+#		reorder="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_reorder.bam"
+#	message:
+#		"Reorder for mark duplicates : {wildcards.sample}"
+#	shell:
+#		"samtools "
+#		"sort "
+#		"{input.fixmate} "
+#		"-o {output.reorder}"
+
+#rule samtools_markduplicate:
+#	input:
+#		reorder="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_reorder.bam"
+#	output:
+#		markdup="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_markdup.bam"
+#	message:
+#		"Mark duplicates : {wildcards.sample}"
+#	shell:
+#		"samtools "
+#		"markdup "
+#		"-S "
+#		"-s "
+#		"-r "
+#		"{input.reorder} "
+#		"{output.markdup}"
+#
+#rule samtools_flagstats:
+#	input:
+#		markdup="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_markdup.bam"
+#	output:
+#		flagstat="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_flagstat.txt"
+#	message:
+#		"Flagstat : {wildcards.sample}"
+#	shell:
+#		"samtools "
+#		"flagstat "
+#		"{input.markdup} > "
+#		"{output.flagstat}"
+
+#rule samtools_stats:
+#	input:
+#		markdup="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_markdup.bam"
+#	output:
+#		samtools_stats="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_samtools_stats.stats"
+#	message:
+#		"Samtools stats : {wildcards.sample}"
+#	shell:
+#		"samtools "
+#		"stats "
+#		"{input.markdup} > "
+#		"{output.samtools_stats}"
+#
+#rule plot_bamstats:
+#	input:
+#		samtools_stats="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_samtools_stats.stats"
+#	output:
+#		plot_samtools="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Mapping/{sample}/{sample}_plotsamtools.html"
+#	message:
+#		"Plot bamstats : {wildcards.sample}"
+#	shell:
+#		"plot-bamstats "
+#		"-p "
+#		"/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/Mapping/{wildcards.sample}/{wildcards.sample}_plotsamtools "
+#		"{input.samtools_stats}"

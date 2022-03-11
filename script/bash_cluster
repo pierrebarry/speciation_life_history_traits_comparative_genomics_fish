@@ -1,0 +1,17 @@
+#!/bin/bash
+#$ -S /bin/bash
+#$ -N MitoZ
+#$ -cwd
+#$ -l h_rt=999:00:00
+#$ -m easb
+#$ -M pierre.barry1@outlook.fr
+#$ -o mitoz_main.out
+#$ -e mitoz_main.err
+#$ -V
+module load python3.3
+module load R-3.4.3
+module load singularity-3.1
+source activate miniconda3-4.3.30
+#snakemake --snakefile /home/pbarry/Snakefile_Cogediv
+#snakemake --snakefile Snakefile_Cogediv --cluster "qsub -cwd -l h_rt=999:00:00 -V -o gbimport_par.out -e gbimport_par.err -m easb -l h_vmem=20G" -j 20 -k
+snakemake --snakefile mitoz_run/Snakefile_Cogediv -d /home/pbarry/ --cluster "qsub -cwd -l h_rt=999:00:00 -V -o mitoz.out -e mitoz.err -m easb" -j 4 -k
