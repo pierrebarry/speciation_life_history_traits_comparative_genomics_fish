@@ -1,0 +1,26 @@
+import os
+from itertools import product
+import subprocess
+import numpy as np
+import pandas as pd
+
+#SPECIES=['Cgale','Cjuli','Dpunt','Hgutt','Lbude','Lmorm','Mmerl','Msurm','Peryt','Scabr','Scant','Scine','Ssard','Styph']
+SPECIES=['Afall']
+#'Afall', 'Spilc', 'Gnige'
+# 'Dlabr' = done
+STAT=['pi','dxy']
+
+rule all:
+	input:
+		stat_gene=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/{stat}_gene_{species}.txt",species=SPECIES,stat=STAT),
+
+rule dxy_pi_gene:
+	input:
+		gene_fasta="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/ABC/{species}_DILS.fasta",
+		script="/home/pbarry/DXY_PI_GENE/dxy_pi_gene.py"
+	output:
+		stat_gene="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/{stat}_gene_{species}.txt"
+	message:
+		"Generate {wildcards.stat} for {wildcards.species}"
+	shell:
+		"python3 {input.script} {wildcards.species} {wildcards.stat} {input.gene_fasta}"
