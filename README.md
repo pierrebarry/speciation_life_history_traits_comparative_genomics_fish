@@ -134,10 +134,8 @@ We used also the following codes for the 4 populations:
 :bar_chart: Scripts:
 - `f3.R ` : plot f3 result for all 12 3-populations topologies for all species
 - `f3_all.R` : the same but plot all results in one plot
+- `add_ancestral_as_outgroup.py` : add one row in VCF that corresponds to the ancestral state as inferred by est-sfs.
 
- ```ruby
-
-```
 
 ## :computer: Semi-permeability
 
