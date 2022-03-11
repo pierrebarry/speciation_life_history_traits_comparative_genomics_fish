@@ -3,9 +3,7 @@ import glob
 import pandas as pd
 
 #SPECIES=['Aboye','Afall''Cgale','Cjuli','Dlabr','Dpunt','Hgutt','Lbude','Lmorm','Mmerl','Msurm','Peryt','Scabr','Scant','Scine','Spilc','Ssard','Styph']
-#SPECIES=['Lbude','Mmerl','Msurm','Scabr','Scine','Ssard','Styph']
-#SPECIES=['Mmerl','Msurm','Scabr','Scine','Styph']
-SPECIES=['Afall','Gnige']
+SPECIES=['Cgale']
 
 for sp in SPECIES:
   print(sp)

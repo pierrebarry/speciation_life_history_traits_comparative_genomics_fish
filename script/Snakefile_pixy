@@ -1,0 +1,148 @@
+## IMPORT PACKAGES
+
+import os
+from itertools import product
+import subprocess
+import numpy as np
+import pandas as pd
+
+#♣text_file = open("/home/pbarry/Styph_int_gt_10KB.txt", "r")
+#SPLIT = text_file.read().split('\n')
+#SPLIT.remove('')
+#INTERVALS=SPLIT
+
+# species= hgutt, lbude, scabr, styph
+# intervals = 3880, 9523, 18498, 8628
+
+SPECIES=['Gnige']
+#SPECIES=['Aboye','Cgale','Cjuli','Dpunt','Hgutt','Lbude','Lmorm','Mmerl','Msurm','Peryt','Scabr','Scant','Scine','Ssard','Styph']
+#SPECIES=['Mmerl','Msurm','Scabr','Scine','Styph']
+#'Dlabr','Spilc'
+
+sp_pandas=[]
+intervals_pandas=[]
+
+for sp in SPECIES:
+	#output = subprocess.check_output("ls /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/"+SPECIES[0]+"/VariantCalling/ | grep 'Joint_Genotyping' | sed 's/[^0-9]*//g'", shell=True)
+	#output = subprocess.check_output("ls /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/"+sp+"/Reference_Genome/interval_split | grep -o -E '[0-9]+'", shell=True)	
+	#out=output.decode().split('\n')
+	#INTERVALS=np.delete(out, -1)
+	output=subprocess.check_output("seqkit fx2tab --length --name --header-line /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/"+sp+"/Reference_Genome/referencegenome_"+sp+".fa", shell=True)
+	out=output.decode()
+	data=pd.DataFrame([x.split('\t') for x in out.split('\n')])
+	data.drop(index=data.index[0], axis=0, inplace=True)
+	data=data.iloc[:-1 , :]
+	data[1]=pd.to_numeric(data[1]).astype(np.int64)
+        data["INTERVALS"]=[x.split(' ')[0] for x in data[0]]
+	data=data[data[1]>=10000]
+	INTERVALS_inref=list(data["INTERVALS"])
+	correspondance=pd.read_csv("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/"+sp+"/Reference_Genome/interval_"+sp+".list",sep="\t",header=None)
+	INTERVALS=[]
+	if sp=="Afall":
+		for j in range(len(INTERVALS_inref)):
+			INTERVALS+=[correspondance[correspondance[0]==INTERVALS_inref[j]].index[0]]        
+	else:
+		for j in range(len(INTERVALS_inref)):
+			INTERVALS+=[correspondance[correspondance[0]==int(INTERVALS_inref[j])].index[0]]
+	sp_pandas+=list(np.repeat(sp,len(INTERVALS)))
+	intervals_pandas+=list(INTERVALS)
+#print(intervals_pandas)
+intervals_pandas = [int(i) for i in intervals_pandas]
+df4 = pd.DataFrame(
+{
+"SP": sp_pandas,
+"INTERVALS": intervals_pandas,
+}
+)
+
+#df4=df4[df4["INTERVALS"]<=10000]
+
+def filter_combinator(combinator, blacklist):
+	def filtered_combinator(*args, **kwargs):
+		for wc_comb in combinator(*args, **kwargs):
+			# Use frozenset instead of tuple
+			# in order to accomodate
+			# unpredictable wildcard order
+			if frozenset(wc_comb) not in blacklist:
+				yield wc_comb
+	return filtered_combinator
+
+INTERVALS=list(np.unique(list(df4["INTERVALS"])))
+
+forbidden={'start'}
+for i in SPECIES:
+	int_tmp=list(df4[df4["SP"]==i]["INTERVALS"])
+	tmp=list(set(INTERVALS)-set(int_tmp))
+	for j in tmp:
+		forbidden|={frozenset({("intervals",j),("species",i)})}
+
+forbidden.remove('start')
+filtered_product = filter_combinator(product, forbidden)
+
+#INTERVALS=[2]
+#INTERVALS=range(117259)
+#INTERVALS=[0,1,2,3,4,5]
+#INTERVALS=[
+	#'LG1A',
+#	   'LG1B','LG2','LG3','LG4','LG5','LG6','LG7','LG8','LG9',
+#	   'LG10','LG11','LG12','LG13','LG14','LG15','LG16','LG17','LG18-21',
+#	   'LG19','LG20','LG22-25','LG24','LGx','MT','UN']
+print(INTERVALS)
+
+
+rule all:
+	input:
+		#joint_gvcf_first=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/pixy/{species}_{intervals}_joint_gcvf_first_all_sites.vcf.gz",species=SPECIES,intervals=INTERVALS)
+		#joint_gvcf_first=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/pixy/{species}_joint_gcvf_first_all_sites.vcf",species=SPECIES)
+		pi_output=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/dxy_pi/pi_window_{species}_{intervals}_joint_gcvf_first_all_sites.vcf.gz.txt",filtered_product,species=SPECIES,intervals=INTERVALS),
+		dxy_output=expand("/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/dxy_pi/dxy_window_{species}_{intervals}_joint_gcvf_first_all_sites.vcf.gz.txt",filtered_product,species=SPECIES,intervals=INTERVALS)
+
+rule genotype_gvcfs:
+	input:
+		reference_genome="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/Reference_Genome/referencegenome_{species}.fa",
+		#python_script="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/pi_scikit_all_N_sites.py",
+		python_script="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/pi_scikit_all_N_sites_Afall.py"
+		#joint_gvcf_first="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/pixy/{species}_{intervals}_joint_gcvf_first_all_sites.vcf.gz"
+		#touch_combined="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/VariantCalling/{species}_{intervals}"
+	output: 
+		#joint_gvcf_first="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/pixy/{species}_joint_gcvf_first_all_sites.vcf"
+		#joint_gvcf_first="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/pixy/{species}_{intervals}_joint_gcvf_first_all_sites.vcf.gz"
+		pi_output="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/dxy_pi/pi_window_{species}_{intervals}_joint_gcvf_first_all_sites.vcf.gz.txt",
+		dxy_output="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/dxy_pi/dxy_window_{species}_{intervals}_joint_gcvf_first_all_sites.vcf.gz.txt"
+	message:
+		"Joint genotyping first : {wildcards.species} - {wildcards.intervals}"
+	shell:
+		"cd /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/VariantCalling/ && "
+		"/home/pbarry/.pyenv/versions/miniconda3-4.3.30/bin/gatk GenotypeGVCFs "
+		"-R {input.reference_genome} "
+		"-V gendb://Joint_Genotyping_{wildcards.intervals} "
+                #"-V gendb://Joint_Genotyping "
+		"-G StandardAnnotation "
+		#"-O /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/pixy/{wildcards.species}_{wildcards.intervals}_joint_gcvf_first_all_sites.vcf "
+		#"-O /home/pbarry/DXY/vcf/{wildcards.species}_{wildcards.intervals}_joint_gcvf_first_all_sites.vcf "
+		"-O /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/dxy_pi/{wildcards.species}_{wildcards.intervals}_joint_gcvf_first_all_sites.vcf "
+		"--include-non-variant-sites "
+		"-L /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/Reference_Genome/interval_split/{wildcards.intervals}.list && "
+		#"-L {wildcards.intervals} && "
+		#"bgzip /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/pixy/{wildcards.species}_{wildcards.intervals}_joint_gcvf_first_all_sites.vcf && "
+		#"bgzip /home/pbarry/DXY/vcf/{wildcards.species}_{wildcards.intervals}_joint_gcvf_first_all_sites.vcf && "
+		"bgzip /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/dxy_pi/{wildcards.species}_{wildcards.intervals}_joint_gcvf_first_all_sites.vcf && "
+		#"tabix -p vcf /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/pixy/{wildcards.species}_{wildcards.intervals}_joint_gcvf_first_all_sites.vcf && "
+		#"tabix -p vcf /home/pbarry/DXY/vcf/{wildcards.species}_{wildcards.intervals}_joint_gcvf_first_all_sites.vcf.gz && "
+		"tabix -p vcf /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/dxy_pi/{wildcards.species}_{wildcards.intervals}_joint_gcvf_first_all_sites.vcf.gz && "
+		#"python3 {input.python_script} /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/pixy/{wildcards.species}_{wildcards.intervals}_joint_gcvf_first_all_sites.vcf 10000 {wildcards.species} && "
+		"mv /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/dxy_pi/{wildcards.species}_{wildcards.intervals}_joint_gcvf_first_all_sites.vcf.* /home/pbarry/DXY/vcf/. && "
+		"python3 {input.python_script} /home/pbarry/DXY/vcf/{wildcards.species}_{wildcards.intervals}_joint_gcvf_first_all_sites.vcf.gz 10000 {wildcards.species} && "
+		"rm /home/pbarry/DXY/vcf/{wildcards.species}_{wildcards.intervals}_joint_gcvf_first_all_sites.vcf.*"
+
+#rule estimate_pi_dxy:
+#	input:
+#		python_script="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/pi_scikit_all_N_sites.py",
+#		joint_gvcf_first="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{species}/pixy/{species}_{intervals}_joint_gcvf_first_all_sites.vcf.gz"
+#	output:
+#		pi_output="/share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/dxy_pi/pi_window_{species}_{intervals}_joint_gcvf_first_all_sites.vcf.gz.txt"
+#	message:
+#		"Estimate pi and dxy: {wildcards.species} - {wildcards.intervals}"
+#	shell:
+#		"python3 {input.python_script} {input.joint_gvcf_first} 10000 {wildcards.species} && "
+#		"rm /share/tycho_poolz1/pagagnaire/COGEDIV/pbarry/{wildcards.species}/pixy/{wildcards.species}_{wildcards.intervals}_joint_gcvf_first_all_sites.vcf.*"
