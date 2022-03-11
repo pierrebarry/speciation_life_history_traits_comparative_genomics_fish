@@ -173,12 +173,32 @@ We used also the following codes for the 4 populations:
 ## :computer: ABC analyses
 
 :file_folder: Files:
+- `genes_to_abc.csv`: Loci to be used in ABC for all species
 - `data_ABC.csv`: Parameters of ABC inference per species and per population comparisons (inner: Mu-Fa/outer : Li-Ga)
 
 :bar_chart: Scripts:
-- `` : 
- ```ruby
+- `plot_graph_ABC.R` : plot ABC results
+- `vcf_to_fasta_gene.py` : convert VCF to FASTA
 
+As DILS accepted input as FASTA, we need to convert VCF to FASTA per species running:
+
+ ```ruby
+python3 vcf_to_fasta_gene.py [SPECIES_CODE]
+```
+
+Then replace the name in the header (here an example with [SPECIES_CODE] = Lmorm):
+
+ ```ruby
+sudo sed -i 's#Lmorm|LmormFa#Fa|LmormFa#g' /DATA/sdb1/Pierre/ABC/Lmorm/Lmorm_DILS_window.fasta
+sudo sed -i 's#Lmorm|LmormGa#Ga|LmormGa#g' /DATA/sdb1/Pierre/ABC/Lmorm/Lmorm_DILS_window.fasta
+sudo sed -i 's#Lmorm|LmormLi#Li|LmormLi#g' /DATA/sdb1/Pierre/ABC/Lmorm/Lmorm_DILS_window.fasta
+sudo sed -i 's#Lmorm|LmormMu#Mu|LmormMu#g' /DATA/sdb1/Pierre/ABC/Lmorm/Lmorm_DILS_window.fasta
+```
+
+And run DILS:
+
+ ```ruby
+/usr/local/anaconda/bin/singularity exec --bind /home/labosea1/DILS_web/DILS/:/mnt /home/labosea1/DILS_web/DILS.sif /home/labosea1/DILS_web/webinterface/app.R host=127.0.0.9 port=8912 nCPU=1
 ```
 
 ## :computer: Infer tree sequences with tsinfer and tsdate
